@@ -53,3 +53,4 @@ let fix = (ipr, ix) => {
   let r = run(pr, 0, new Set(), 0);
   return r.inf ? fix(ipr, ix - 1) : r.acc;
 };
+fix(program,program.length - 1);
