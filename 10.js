@@ -4,4 +4,5 @@ let res = input.sort((x,y) => x - y).slice(1).reduce((acc,x) => ({c:x,d1: acc.d1
 (res.d1 + 1) * (res.d3 + 1)
 // second part
 let calcDiffs = (input) => {let sorted = input.sort((x,y) => x - y);let diffs = [0,...sorted, Math.max(...sorted) + 3].reduce((acc,x,ix,xs) => acc.concat(x - xs[ix - 1]),[]).slice(1);return diffs.reduce((acc,x) => (x === 1 ? {sub: acc.sub + 1, subres: (acc.sub >= 3 ? acc.subres + acc.sub : Math.pow(2,acc.sub)), res: acc.res} : {sub: 0, subres:0, res: (acc.subres > 0 ? acc.res*acc.subres : acc.res))},{sub:0,subres:0,res:1})}
+let trib = (f => {let m = [0,0,1];return function tri(n) {if (m[n] != undefined) {return m[n];};let ret = tri(n-1) + tri(n-2) + tri(n-3);m[n]=ret;return ret;}})();
 calcDiffs(input)
