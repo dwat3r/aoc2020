@@ -51,16 +51,5 @@ let trib = ((f) => {
 calcDiffs(input);
 
 // dynamic programming solution for part2
-let calc = (input, memo, n) => {
-  if (memo[n] !== undefined) {
-    return memo[n];
-  }
-  let ret =
-    calc(input, memo, n - 1) +
-    ((input[n] - input[n - 2] <= 3 ? calc(input, memo, n - 2) : 0) +
-      (input[n] - input[n - 3] <= 3 ? calc(input, memo, n - 3) : 0));
-  memo[n] = ret;
-  return ret;
-};
-let memo = [1];
-calc([0, ...input, input[input.length - 1] + 3], memo, input.length + 2);
+let calc = input => {let memo = [1];return function rec(n) {if(memo[n] !== undefined) {return memo[n];}let ret = rec(n-1) + (((input[n] - input[n-2] <= 3) ? rec(n-2) : 0) + ((input[n] - input[n-3] <= 3) ? rec(n-3) : 0));memo[n] = ret;return ret;}(input.length)}
+calc([0, ...input, input[input.length - 1] + 3]);
