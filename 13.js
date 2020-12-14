@@ -2,7 +2,7 @@ let input = document
   .querySelector("pre")
   .textContent.split("\n")
   .filter((i) => i);
-// first part
+//first part
 let find = (input) => {
   let arrive = parseInt(input[0]);
   let schedule = input[1]
@@ -49,20 +49,53 @@ let findArranged = (input) => {
   })(schedule[0].s - schedule[0].ix, schedule);
 };
 
-let test = "7,13,x,x,59,x,31,19".split(",")
-    .map((i, ix) => ({ s: parseInt(i), ix: ix }))
+let prep = (input) =>
+  input
+    .split(",")
+    .map((i, ix) => ({ s: parseInt(i), ix: BigInt(ix) }))
     .filter((six) => !isNaN(six.s))
-    .sort((x, y) => y.s - x.s);
+    .map((six) => ({ ...six, s: BigInt(six.s) }));
 
-  let input = document
-    .querySelector("pre")
-    .textContent.split("\n")
-    .filter((i) => i);
-  let schedule = input[1]
-      .split(",")
-      .map((i, ix) => ({ s: parseInt(i), ix: ix }))
-      .filter((six) => !isNaN(six.s))
-      .sort((x, y) => y.s - x.s);
-  let solve = input => {let i = 0;while (!(input.every(s => (i + (s.ix % s.s)) % s.s === 0))){i=i+input[input.length-1].s;};return i;}
+let test = "7,13,x,x,59,x,31,19";
+let stest = "17,x,13,19";
+let sstest = "1789,37,47,1889";
 
-  solve(schedule)
+let input =
+  "19,x,x,x,x,x,x,x,x,41,x,x,x,37,x,x,x,x,x,367,x,x,x,x,x,x,x,x,x,x,x,x,13,x,x,x,17,x,x,x,x,x,x,x,x,x,x,x,29,x,373,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,x,23";
+let schedule = prep(input);
+
+// example solution formula for 67,7,59,61 is:
+// 67*(5) + 67*7*(14) + 67*7*59*(27)
+// you have to find the numbers in parentheses.
+let solve = (input) => {
+  var n = input[0].s;
+  var m = Array(input.length - 1).fill(0n);
+  var i = 1;
+  m[0] = 1n;
+  console.log(n, m);
+  while (i !== input.length) {
+    while (true) {
+      n = m.reduce(
+        (acc, x) => ({
+          ix: acc.ix + 1,
+          s:
+            acc.s +
+            input
+              .slice(0, acc.ix)
+              .map((six) => six.s)
+              .reduce((acc, x) => acc * x, 1n) *
+              x,
+        }),
+        { ix: 1, s: 0n }
+      ).s;
+      console.log(n, m, (n + input[i].ix) % input[i].s);
+      if ((n + input[i].ix) % input[i].s === 0n) break;
+      m[i - 1]++;
+    }
+    i++;
+  }
+  return [n, m];
+};
+
+console.log(prep(input));
+console.log(solve(prep(input)));
