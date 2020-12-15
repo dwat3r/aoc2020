@@ -6,8 +6,8 @@ const trampoline = (fn) => (...args) => {
   return result;
 };
 
-let input = "2,1,10,11,0,6";
-
+//let input = "2,1,10,11,0,6";
+let input ="0,3,6"
 let psh = (arr, e) => {
   if (arr.length === 2) {
     arr.shift();
@@ -20,13 +20,15 @@ let psh = (arr, e) => {
 let play = (rinput) => {
   let input = rinput.split(",");
   let memo = input.reduce(
-    (acc, x) => ({ i: acc.i + 1, res: { ...acc.res, [x]: [acc.i] } }),
+    (acc, x) => {acc.res[x] = [acc.i];return ({ i: acc.i + 1, res: acc.res })},
     {
       i: 1,
-      res: {},
+      res: [],
     }
   ).res;
+  //console.log(memo)
   return trampoline(function step(last, turn) {
+    //console.log(turn,last,memo)
     if(turn%1000000===0){console.log(turn,last)}
     if (turn === 30000001) {
       return last;
