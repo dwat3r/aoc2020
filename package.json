@@ -1,0 +1,26 @@
+{
+  "name": "aoc2020",
+  "version": "0.0.21",
+  "description": "code golfin",
+  "main": "22.js",
+  "dependencies": {
+    "hashmap": "^2.4.0",
+    "immutable": "^4.0.0-rc.12",
+    "lodash": "^4.17.20",
+    "object-hash": "^2.0.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dwat3r/aoc2020.git"
+  },
+  "author": "dwat3r",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dwat3r/aoc2020/issues"
+  },
+  "homepage": "https://github.com/dwat3r/aoc2020#readme"
+}
