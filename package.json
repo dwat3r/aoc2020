@@ -4,6 +4,7 @@
   "description": "code golfin",
   "main": "22.js",
   "dependencies": {
+    "circular-list": "0.0.2",
     "hashmap": "^2.4.0",
     "immutable": "^4.0.0-rc.12",
     "lodash": "^4.17.20",
