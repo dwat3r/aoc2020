@@ -66,9 +66,8 @@ let linsert = (ll, n, arr) => {
   var nn;
   while (arr.length > 0) {
     ne = arr.shift();
-    nn = new LinkedList.Node(ne);
-    ll.insert(n, nn);
-    n = nn;
+    ll.insert(n, ne);
+    n = ne;
   }
 };
 // returns sliced in an array, and removes the sliced
@@ -76,7 +75,7 @@ let lslice = (ll, n, amount) => {
   var c = 0;
   var ret = [];
   while (c !== amount) {
-    ret.push(n.data);
+    ret.push(n);
     var temp = n.next;
     ll.remove(n);
     n = temp;
@@ -95,41 +94,54 @@ let toArr = (ll) => {
   }
   return ret;
 };
-let lfindDest = (cups, currentNode, pickdup) => {
+let toMap = (ll) => {
+  var c = 0;
+  var ret = new Map();
+  var n = ll.first;
+  while (c !== ll.length) {
+    ret.set(n.data, n);
+    n = n.next;
+    c++;
+  }
+  return ret;
+};
+
+let lfindDest = (cups, currentNode, pickdup, memo, length) => {
   // console.log("findDest",current)
-  var destVal = currentNode.data - 1 === 0 ? 1000000 : currentNode.data - 1;
-  while (pickdup.indexOf(destVal) !== -1) {
+  var destVal = currentNode.data - 1 === 0 ? length : currentNode.data - 1;
+  while (pickdup.some(n=>n.data === destVal)) {
     destVal--;
     if (destVal < 1) {
-      destVal = 1000000;
+      destVal = length;
     }
   }
-  return lfind(cups, destVal);
+ return memo.get(destVal);
 };
 
 let parse2 = (input) => {
-  let nums = Array(101)
+  let nums = Array(1000001)
     .fill(1)
     .map((_, ix) => ix)
     .slice(10);
 
   let orig = [...input].map((i) => parseInt(i));
   let i = orig.indexOf(max(orig));
-  return toLinked([...orig.slice(0, i + 1), ...nums, ...orig.slice(i + 1)]);
+  return toLinked([...orig, ...nums]);
 };
 
 let shuffle2 = (cups) => {
   var current = cups.first;
+  var l = cups.length;
   var turns = 0;
+  let memo = toMap(cups)
   while (true) {
     //console.log("---")
-    //if (turns % 1000 === 0)
-    if(turns%10===0) console.log(turns, current.data, toArr(cups));
+    //if(turns%1000000===0) console.log(turns, current.data, toArr(cups));
     if (turns === 10000000) return cups;
     let pickdup = lslice(cups, current.next, 3);
-    let dest = lfindDest(cups, current, pickdup);
+    let dest = lfindDest(cups, current, pickdup, memo, l);
     linsert(cups, dest, pickdup);
-    //console.log(util.inspect([cups, current, pickdup, dest], {compact : true, colors: true}))
+    //console.log(util.inspect([toArr(cups), current.data, pickdup.map(n=>n.data), dest.data], {compact : true, colors: true}))
     current = current.next;
     turns++;
   }
@@ -137,9 +149,11 @@ let shuffle2 = (cups) => {
 
 let getStars = (cups) => {
   let i1 = lfind(cups, 1);
+  console.log(i1.data, i1.next.data, i1.next.next.data)
   return i1.next.data * i1.next.next.data;
 };
 
+//console.log(toArr(shuffle2(toLinked(parse(test)))))
 let ret = shuffle2(parse2(input));
 console.log(toArr(ret));
 console.log(getStars(ret));
