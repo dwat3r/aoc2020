@@ -116,8 +116,7 @@ baabbaaaabbaaaababbaababb
 abbbbabbbbaaaababbbbbbaaaababb
 aaaaabbaabaaaaababaa
 aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
-aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba`
-
+aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba`;
 
 let test4 = `0: 8 11
 2: "a" 24 | "b" 4
@@ -149,7 +148,7 @@ let test4 = `0: 8 11
 31: "b" 17 | "a" 13
 42: 9 "b" | 10 "a"
 
-babbbbaabbbbbabbbbbbaabaaabaaa`
+aaaaabbaabaaaaababaa`;
 
 // abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa
 // bbabbbbaabaabba
@@ -167,7 +166,6 @@ babbbbaabbbbbabbbbbbaabaaabaaa`
 // babaaabbbaaabaababbaabababaaab
 // aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba`
 
-
 let check2 = (input) => {
   let [ri, mi] = input.split("\n\n");
   let rule = rules(ri);
@@ -176,46 +174,65 @@ let check2 = (input) => {
     .split("\n")
     .filter((i) => i)
     .flatMap((m) => {
-      let {valid, ix} = validate(rule, m)
+      let { valid, ix } = validate(rule, m);
       //return valid && ix === m.length
-      return {valid, ix}
-    }
-    )
-   //.filter((i) => i).length;
+      return { valid, ix };
+    });
+  //.filter((i) => i).length;
 };
 
-// todo the case when looping match fails with insufficent input
+// todo the case when looping match fails with insufficent input:
+// it fails because 0 -> 8 11 fails, and we need to store the unwalked paths of the graph
+// to retry them later after failing on one.
 let validate = (rule, word) => {
-  return function rec(rix, ix, depth) {
+  let rnrxsts = new Map();
+  return (function rec(rix, ix, depth) {
     var nix = ix;
     if (/\d+/.test(rix)) {
-      var [nrixs, ...nrxst] = rule[rix];
-      var [nrix, ...nrxt] = nrixs;
+      if (rnrxsts.has(rix)) {
+        var [nrixs, ...nrxst] = rnrxsts.get(rix);
+        var [nrix, ...nrxt] = nrixs;
+        rnrxsts.delete(rix);
+      } else {
+        var [nrixs, ...nrxst] = rule[rix];
+        var [nrix, ...nrxt] = nrixs;
+      }
       var rvalid = true;
       while (true) {
         while (true) {
-          let {valid, ix} = rec(nrix, nix, depth+1);
+          let { valid, ix } = rec(nrix, nix, depth + 1);
           rvalid = valid;
-          if(rvalid) nix=ix;
-          if(nrxt.length === 0 || !rvalid) break;
+          if (rvalid) nix = ix;
+          if (nrxt.length === 0 || !rvalid) break;
           var [nrix, ...nrxt] = nrxt;
         }
-        if(rvalid || nrxst.length === 0) break;
-        if(!rvalid){
+        if (rvalid) {
+          if (nrxst.length > 0 && (rix ===  '8' || rix === '11')) {
+            rnrxsts.set(rix,nrxst);
+          }
+          break;
+        }
+        if (rvalid || ((rix !==  '8' && rix !== '11' && rix !== '0') && nrxst.length === 0)) break;
+        if (!rvalid) {
           nix = ix;
-          var [nrixs, ...nrxst] = nrxst;
-          var [nrix, ...nrxt] = nrixs;
+          if (nrxst.length > 0) {
+            var [nrixs, ...nrxst] = nrxst;
+            var [nrix, ...nrxt] = nrixs;
+          } else if (rix === '0') {
+            var [nrixs, ...nrxst] = rule[rix];
+            var [nrix, ...nrxt] = nrixs;
+          } else break;
           rvalid = true;
         }
       }
-      return {valid: rvalid, ix: nix}
+      return { valid: rvalid, ix: nix};
     } else {
-      //if (word[ix] !== rix) console.log(rix,word[ix], [...word].slice(0, nix).join(""), [...word].slice(nix).join(""), depth)
+      //if (word[ix] !== rix) console.log(rix,word[ix], [...word].slice(0, nix).join(""), [...word].slice(nix).join(""), depth, rnrxsts.keys())
       return word[ix] === rix
-        ? {valid: true, ix: ix+1}
-        : {valid:false, ix: ix}
+        ? { valid: true, ix: ix + 1}
+        : { valid: false, ix: ix};
     }
-  }('0',0, 0);
+  })("0", 0, 0);
 };
 
 console.log(check2(test4));
