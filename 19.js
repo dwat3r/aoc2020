@@ -103,6 +103,8 @@ let test3 = `42: 9 14 | 10 1
 24: 14 1
 
 abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa
+aaaabbaaaabbaaa
+babaaabbbaaabaababbaabababaaab
 bbabbbbaabaabba
 babbbbaabbbbbabbbbbbaabaaabaaa
 aaabbbbbbaaaabaababaabababbabaaabbababababaaa
@@ -113,9 +115,7 @@ ababaaaaabbbaba
 baabbaaaabbaaaababbaababb
 abbbbabbbbaaaababbbbbbaaaababb
 aaaaabbaabaaaaababaa
-aaaabbaaaabbaaa
 aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
-babaaabbbaaabaababbaabababaaab
 aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba`
 
 
@@ -193,15 +193,11 @@ let validate = (rule, word) => {
       var [nrix, ...nrxt] = nrixs;
       var rvalid = true;
       while (true) {
-        while (rvalid) {
+        while (true) {
           let {valid, ix} = rec(nrix, nix, depth+1);
           rvalid = valid;
           if(rvalid) nix=ix;
-          if(nrxt.length === 0) break;    
-          if(nix >= word.length) {
-            rvalid = nrxt.length === 0;
-            break;
-          }
+          if(nrxt.length === 0 || !rvalid) break;
           var [nrix, ...nrxt] = nrxt;
         }
         if(rvalid || nrxst.length === 0) break;
@@ -212,9 +208,9 @@ let validate = (rule, word) => {
           rvalid = true;
         }
       }
-      //console.log(rix,nix,rvalid,nrix,nrixs, [...word].slice(ix, nix).join(""), depth)
       return {valid: rvalid, ix: nix}
     } else {
+      //if (word[ix] !== rix) console.log(rix,word[ix], [...word].slice(0, nix).join(""), [...word].slice(nix).join(""), depth)
       return word[ix] === rix
         ? {valid: true, ix: ix+1}
         : {valid:false, ix: ix}
