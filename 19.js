@@ -148,12 +148,12 @@ let test4 = `0: 8 11
 31: "b" 17 | "a" 13
 42: 9 "b" | 10 "a"
 
-aaaaabbaabaaaaababaa`;
+babbbbaabbbbbabbbbbbaabaaabaaa`
 
-// abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa
+//abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa
 // bbabbbbaabaabba
-// babbbbaabbbbbabbbbbbaabaaabaaa
-// aaabbbbbbaaaabaababaabababbabaaabbababababaaa
+//babbbbaabbbbbabbbbbbaabaaabaaa
+//aaabbbbbbaaaabaababaabababbabaaabbababababaaa
 // bbbbbbbaaaabbbbaaabbabaaa
 // bbbababbbbaaaaaaaabbababaaababaabab
 // ababaaaaaabaaab
@@ -185,54 +185,55 @@ let check2 = (input) => {
 // it fails because 0 -> 8 11 fails, and we need to store the unwalked paths of the graph
 // to retry them later after failing on one.
 let validate = (rule, word) => {
-  let rnrxsts = new Map();
-  return (function rec(rix, ix, depth) {
+  // prnrxst contains the undiscovered nodes.
+  return (function rec(rix, ix, depth, prnrxst) {
     var nix = ix;
     if (/\d+/.test(rix)) {
-      if (rnrxsts.has(rix)) {
-        var [nrixs, ...nrxst] = rnrxsts.get(rix);
+      if (prnrxst.length > 0) {
+        var [nrixs, ...nrxst] = prnrxst;
         var [nrix, ...nrxt] = nrixs;
-        rnrxsts.delete(rix);
       } else {
         var [nrixs, ...nrxst] = rule[rix];
         var [nrix, ...nrxt] = nrixs;
       }
+      let rnrxsts = new Map();
       var rvalid = true;
       while (true) {
         while (true) {
-          let { valid, ix } = rec(nrix, nix, depth + 1);
+          var crnrxst = [];
+          if (rnrxsts.has(nrix)) {
+            crnrxst = rnrxsts.get(nrix);
+            rnrxsts.delete(nrix);
+          }
+          let { valid, ix, rnrxst } = rec(nrix, nix, depth + 1, crnrxst);
           rvalid = valid;
+          if (rnrxst.length > 0) rnrxsts.set(nrix, rnrxst);
           if (rvalid) nix = ix;
           if (nrxt.length === 0 || !rvalid) break;
           var [nrix, ...nrxt] = nrxt;
         }
-        if (rvalid) {
-          if (nrxst.length > 0 && (rix ===  '8' || rix === '11')) {
-            rnrxsts.set(rix,nrxst);
-          }
-          break;
-        }
-        if (rvalid || ((rix !==  '8' && rix !== '11' && rix !== '0') && nrxst.length === 0)) break;
+        if (rvalid) break;
+        if (!['0','8','11'].includes(rix) && nrxst.length === 0) break;
         if (!rvalid) {
           nix = ix;
           if (nrxst.length > 0) {
             var [nrixs, ...nrxst] = nrxst;
             var [nrix, ...nrxt] = nrixs;
-          } else if (rix === '0') {
+          } else if (['0','8','11'].includes(rix)) {
             var [nrixs, ...nrxst] = rule[rix];
             var [nrix, ...nrxt] = nrixs;
           } else break;
           rvalid = true;
         }
       }
-      return { valid: rvalid, ix: nix};
+      return { valid: rvalid, ix: nix, rnrxst: nrxst };
     } else {
-      //if (word[ix] !== rix) console.log(rix,word[ix], [...word].slice(0, nix).join(""), [...word].slice(nix).join(""), depth, rnrxsts.keys())
+      if (word[ix] !== rix)console.log(rix,word[ix],[...word].slice(0, nix).join(""),[...word].slice(nix).join(""),depth);
       return word[ix] === rix
-        ? { valid: true, ix: ix + 1}
-        : { valid: false, ix: ix};
+        ? { valid: true, ix: ix + 1, rnrxst: [] }
+        : { valid: false, ix: ix, rnrxst: [] };
     }
-  })("0", 0, 0);
+  })("0", 0, 0, []);
 };
 
 console.log(check2(test4));
