@@ -610,7 +610,7 @@ bbbbabbbbbaabbaaabababbb
 aabaabaababbbabbbbbbaaab
 aaaabbbbbbbbbaaabaababbb
 bbbabbabbbbaaaabaaaababa
-ababbbabbbbbaaaaabbbbbba`
+ababbbabbbbbaaaaabbbbbba`;
 
 let test = `0: 1 2
 1: "a"
@@ -788,7 +788,6 @@ let check2 = (input) => {
     .split("\n")
     .filter((i) => i)
     .flatMap((m) => {
-      
       //return valid && ix === m.length
       return run2(rule, m);
     });
@@ -858,7 +857,6 @@ let validate = (rule, word) => {
   })("0", 0, 0, []);
 };
 
-
 // this is a nice solution for THIS grammar.
 let run2 = (rule, word) => {
   return Array(10)
@@ -869,29 +867,26 @@ let run2 = (rule, word) => {
         .map((_, n) => [k + 1, n + 1])
     )
     .reduce((valid, kn) => {
-      if(!valid) {
-      let arr = Array(kn[0]+kn[1])
-      .fill("42")
-      .concat(Array(kn[1]).fill("31"))
-      let { rvalid, nix } = arr
-        .reduce(
+      if (!valid) {
+        let arr = Array(kn[0] + kn[1])
+          .fill("42")
+          .concat(Array(kn[1]).fill("31"));
+        let { rvalid, nix } = arr.reduce(
           (ret, rix) => {
             let { rvalid, nix } = ret;
-            if(rvalid){
-            let rret = run(rule, rix, word, nix);
-
-            return { 
-              rvalid: ret.rvalid && rret.length > 0 && rret[0].iix > ret.nix,
-              nix: rret.length > 0 ? rret[0].iix : ret.nix
-            };
-          } else return ret;
+            if (rvalid) {
+              let rret = run(rule, rix, word, nix);
+              return {
+                rvalid: ret.rvalid && rret.length > 0 && rret[0].iix > ret.nix,
+                nix: rret.length > 0 ? rret[0].iix : ret.nix,
+              };
+            } else return ret;
           },
           { rvalid: true, nix: 0 }
         );
-      return rvalid && nix === word.length
-      } else 
-      return valid;
-    }, false)
+        return rvalid && nix === word.length;
+      } else return valid;
+    }, false);
 };
 
-console.log(check2(input).filter(i=>i).length);
+console.log(check2(input).filter((i) => i).length);
