@@ -38,33 +38,34 @@ let calc = (input) => {
   })(0, plus, input);
 };
 
-let run = (input) =>
+let run = (input, calc) =>
   input
     .split("\n")
     .filter((i) => i)
     .map((expr) => calc(parse(expr)))
     .reduce((acc, x) => acc + x);
 
-//console.log(run(input));
+console.log(run(input, calc));
 // part2
 
 let calc2 = (input) => {
   return (function rec(res, op, input) {
-    if (input.length === 0) return res;
+    if (input.length === 0) return { subres: res, rem: []} ;
     let [x, ...tail] = input;
     if (/\d/.test(x)) {
       return rec(op(res, parseInt(x)), op, tail);
     } else if (x === "+") {
       return rec(res, plus, tail);
     } else if (x === "*") {
-      return rec(res, mult, tail);
+      let {subres, rem} = rec(0, plus, tail);
+      return { subres: res * subres, rem: rem };
     } else if (x === "(") {
       let { subres, rem } = rec(0, plus, tail);
       return rec(op(res, subres), op, rem);
     } else if (x === ")") {
       return { subres: res, rem: tail };
     }
-  })(0, plus, input);
+  })(0, plus, input).subres;
 };
 
-console.log(calc2(parse(test)));
+console.log(run(input, calc2));
