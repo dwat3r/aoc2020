@@ -795,6 +795,7 @@ let check2 = (input) => {
   //.filter((i) => i).length;
 };
 
+// this does not work. but this could be a nice general solution.
 // todo the case when looping match fails with insufficent input:
 // it fails because 0 -> 8 11 fails, and we need to store the unwalked paths of the graph
 // to retry them later after failing on one.
@@ -857,6 +858,8 @@ let validate = (rule, word) => {
   })("0", 0, 0, []);
 };
 
+
+// this is a nice solution for THIS grammar.
 let run2 = (rule, word) => {
   return Array(10)
     .fill(0)
@@ -865,7 +868,8 @@ let run2 = (rule, word) => {
         .fill(0)
         .map((_, n) => [k + 1, n + 1])
     )
-    .map((kn, i) => {
+    .reduce((valid, kn) => {
+      if(!valid) {
       let arr = Array(kn[0]+kn[1])
       .fill("42")
       .concat(Array(kn[1]).fill("31"))
@@ -873,17 +877,21 @@ let run2 = (rule, word) => {
         .reduce(
           (ret, rix) => {
             let { rvalid, nix } = ret;
+            if(rvalid){
             let rret = run(rule, rix, word, nix);
 
             return { 
               rvalid: ret.rvalid && rret.length > 0 && rret[0].iix > ret.nix,
               nix: rret.length > 0 ? rret[0].iix : ret.nix
             };
+          } else return ret;
           },
           { rvalid: true, nix: 0 }
         );
-      return {valid: rvalid, ix: nix }
-    }).some(ret=> ret.valid && ret.ix === word.length);
+      return rvalid && nix === word.length
+      } else 
+      return valid;
+    }, false)
 };
 
-console.log(check2(test3));
+console.log(check2(input).filter(i=>i).length);
