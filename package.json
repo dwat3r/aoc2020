@@ -5,6 +5,7 @@
   "main": "22.js",
   "dependencies": {
     "circular-list": "0.0.2",
+    "fast-equals": "^2.0.0",
     "hashmap": "^2.4.0",
     "immutable": "^4.0.0-rc.12",
     "lodash": "^4.17.20",
