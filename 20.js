@@ -1,6 +1,7 @@
 const util = require("util");
 const fs = require("fs");
 const fe = require("fast-equals");
+const _ = require("lodash");
 
 let test = `Tile 2311:
 ..##.#..#.
@@ -141,6 +142,8 @@ let edges = (tile) => {
 
 let intersect = (arr1, arr2) =>
   arr1.filter((e) => arr2.some((ae) => fe.deepEqual(ae, e)));
+  let difference = (arr1, arr2) =>
+  arr1.filter((e) => !arr2.some((ae) => fe.deepEqual(ae, e)));
 
 let run = (input) => {
   let neighs = input.map((t) => ({
@@ -168,14 +171,49 @@ let vb = (v) => util.inspect(v, { depth: null, colors: true, compact: true });
 //console.log(vb(run(parse(input))));
 
 // part 2
+
+let left = tile => tile.data.map(tv => tv[0])
+let right = tile => tile.data.map(tv => tv[9])
+let top = tile => tile.data[0]
+let bottom = tile => tile.data[9]
+
+let transforms = tile => [
+  tile,
+  {name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-y][x])) }, // rot 90
+  {name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-x][tile.data.length-1-y])) }, // rot 180
+  {name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[y][tile.data.length-1-x])) }, // rot 270
+  {name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[x][tile.data.length-1-y])) }, // flip horizontal
+  {name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-x][y])) }, // flip vertical
+]
+
+let ser = (x,y) => `${x},${y}`
+let deser = xy => xy.split(",").filter(i=>i).map(i=>parseInt(i))
+
 let assemble = (input) => {
-  let neighs = input.map((t) => ({
-    name: t.name,
-    neighs: input
-      .filter(
+  let [t, ...tail] = input;
+  let grid = new Map();
+  grid.set(ser(0,0), t);
+  return function rec(grid, input) {
+    //console.log(vb([grid, input.map(t=>t.name)]))
+    if (input.length === 0) return grid;
+    let toRem = new Set();
+    let ngrid = _.cloneDeep(grid);
+    grid.forEach((t,xy) => {
+      let [x,y] = deser(xy);
+      let neighs = input.filter(
         (ot) =>
           !fe.deepEqual(ot, t) && intersect(edges(ot), edges(t)).length > 0
-      )
-      .map((ot) => ot.name),
-  }));
+      ).flatMap(nt=> transforms(nt))
+      
+      if (!grid.has(ser(x+1, y))) neighs.filter(nt => fe.deepEqual(right(t),left(nt))).forEach(nt=> {ngrid.set(ser(x+1, y), nt);toRem.add(nt.name)})
+      if (!grid.has(ser(x-1, y))) neighs.filter(nt => fe.deepEqual(left(t),right(nt))).forEach(nt=> {ngrid.set(ser(x-1, y), nt);toRem.add(nt.name)})
+      if (!grid.has(ser(x, y+1))) neighs.filter(nt => fe.deepEqual(top(t),bottom(nt))).forEach(nt=> {ngrid.set(ser(x, y+1), nt);toRem.add(nt.name)})
+      if (!grid.has(ser(x, y-1))) neighs.filter(nt => fe.deepEqual(bottom(t),top(nt))).forEach(nt=> {ngrid.set(ser(x, y-1), nt);toRem.add(nt.name)})
+    })
+    return rec(ngrid, input.filter((e) => ![...toRem.values()].some((ae) => fe.deepEqual(ae, e.name))));
+  }(grid, tail)
 };
+
+//console.log(vb(run(parse(input))));
+// todo it works for test but not for input
+console.log(vb(assemble(parse(input))));
