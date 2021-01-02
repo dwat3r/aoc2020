@@ -118,7 +118,7 @@ let parse = (input) =>
     .split("\n\n")
     .filter((i) => i)
     .map((tile) => {
-      let [sname, ...sdatas] = tile.split("\n");
+      let [sname, ...sdatas] = tile.split("\n").filter(i=>i);
       let [_, name] = sname.match(/^Tile (\d+):$/);
       let data = sdatas.map((sdata) => [...sdata]);
       return { name: name, data: data };
@@ -187,20 +187,30 @@ let bottom = tile => tile.data[9]
 
 let transforms = tile => [
   tile,
-  {name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-y][x])) }, // rot 90
-  {name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-x][tile.data.length-1-y])) }, // rot 180
-  {name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[y][tile.data.length-1-x])) }, // rot 270
-  {name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[x][tile.data.length-1-y])) }, // flip horizontal
-  {name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-x][y])) }, // flip vertical
+  rot90(tile),
+  rot180(tile),
+  rot270(tile),
+  fliph(tile), 
+  flipv(tile),
+  flipv(rot270(tile)),
+  fliph(rot270(tile))
 ]
+
+let rot90  = tile =>  ({name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-y][x])) })
+let rot180 = tile =>  ({name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-x][tile.data.length-1-y])) })
+let rot270 = tile =>  ({name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[y][tile.data.length-1-x])) })
+let fliph  = tile =>  ({name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[x][tile.data.length-1-y])) })
+let flipv  = tile =>  ({name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-x][y])) })
+  
 
 let ser = (x,y) => `${x},${y}`
 let deser = xy => xy.split(",").filter(i=>i).map(i=>parseInt(i))
 
 // todo iterate over input instead of grid, and check if remaining element fits on the already existing arranged puzzle
 // todo: melysegi bejaras es megnezni hogy melyik configbol elerheto az osszes puzzle elem
+// collect neighbours to sides of grid tiles, and remove tile if it found to be incompatible with the others.
 let assemble = (input) => {
-  let [t, ...tail] = input;
+  let [t, ...tail] = input.flatMap(t=>transforms(t));
   let grid = new Map();
   grid.set(ser(0,0), t);
   return function rec(grid, input) {
@@ -208,34 +218,39 @@ let assemble = (input) => {
     if (input.length === 0) return grid;
     let toRem = new Set();
     let ngrid = _.cloneDeep(grid);
-    let neighs = [...grid.entries()].map(xygt => {
-      return {
-        gt: xygt, 
-        neigh: input.flatMap(t=>transforms(t))
-          .filter(t => intersect(edges(xygt[1]),edges(t)).length === 1)
-      }
-    })
     
-    
-    // let neighs = input.flatMap(t=>transforms(t)).map(t => {
-    //   return [...grid.values()].filter(
-    //     (gt) => intersect(edges(gt), edges(t)).length > 0
-    //   ).length > 0
-      // transforms(t).filter(nt=> {
-      //   gneighs.some(xygt)
-      // })
+    grid.forEach((t, xy) => {
+      let [x,y] = deser(xy)
+      let neigh = input.filter(nt => intersect(edges(t), edges(nt)).length > 0)
 
-      
-
-      // if (!grid.has(ser(x+1, y))) neigh.filter(nt => fe.deepEqual(right(t),left(nt))).forEach(nt=> {ngrid.set(ser(x+1, y), nt);toRem.add(nt.name)})
-      // if (!grid.has(ser(x-1, y))) neigh.filter(nt => fe.deepEqual(left(t),right(nt))).forEach(nt=> {ngrid.set(ser(x-1, y), nt);toRem.add(nt.name)})
-      // if (!grid.has(ser(x, y+1))) neigh.filter(nt => fe.deepEqual(top(t),bottom(nt))).forEach(nt=> {ngrid.set(ser(x, y+1), nt);toRem.add(nt.name)})
-      // if (!grid.has(ser(x, y-1))) neigh.filter(nt => fe.deepEqual(bottom(t),top(nt))).forEach(nt=> {ngrid.set(ser(x, y-1), nt);toRem.add(nt.name)})
-    
+      if (!grid.has(ser(x+1, y))) neigh.filter(nt => fe.deepEqual(right(t),left(nt))).forEach(nt=> {ngrid.set(ser(x+1, y), nt);toRem.add(nt.name)})
+      if (!grid.has(ser(x-1, y))) neigh.filter(nt => fe.deepEqual(left(t),right(nt))).forEach(nt=> {ngrid.set(ser(x-1, y), nt);toRem.add(nt.name)})
+      if (!grid.has(ser(x, y+1))) neigh.filter(nt => fe.deepEqual(top(t),bottom(nt))).forEach(nt=> {ngrid.set(ser(x, y+1), nt);toRem.add(nt.name)})
+      if (!grid.has(ser(x, y-1))) neigh.filter(nt => fe.deepEqual(bottom(t),top(nt))).forEach(nt=> {ngrid.set(ser(x, y-1), nt);toRem.add(nt.name)})
+    });
     return rec(ngrid, input.filter((e) => ![...toRem.values()].some((ae) => fe.deepEqual(ae, e.name))));
   }(grid, tail)
 };
 
+let draw = grid => {
+  let sorted = [...grid.entries()].sort((x,y)=> {
+    let [x1,y1] = deser(x[0]);
+    let [x2,y2] = deser(y[0]);
+    return (x1 - x2)
+  }).sort((x,y)=> {
+    let [x1,y1] = deser(x[0]);
+    let [x2,y2] = deser(y[0]);
+    return (y2 - y1)
+  })
+  let wide = Math.sqrt(sorted.length)
+  let long = sorted[0][1].data.length
+  let [start] = deser(sorted[0][0])
+  let ret = sorted.reduce((acc, t, ix)=> {
+    acc[ix%wide]
+  },[])
+  return ret;
+}
+
 //console.log(vb(run(parse(input))));
 // todo it works for test but not for input
-console.log(vb(assemble(parse(input))));
+console.log(vb(draw(assemble(parse(input)))));
