@@ -198,6 +198,7 @@ let ser = (x,y) => `${x},${y}`
 let deser = xy => xy.split(",").filter(i=>i).map(i=>parseInt(i))
 
 // todo iterate over input instead of grid, and check if remaining element fits on the already existing arranged puzzle
+// todo: melysegi bejaras es megnezni hogy melyik configbol elerheto az osszes puzzle elem
 let assemble = (input) => {
   let [t, ...tail] = input;
   let grid = new Map();
@@ -207,13 +208,22 @@ let assemble = (input) => {
     if (input.length === 0) return grid;
     let toRem = new Set();
     let ngrid = _.cloneDeep(grid);
-    input.forEach(t => {
-      let gneighs = [...grid.entries()].filter(
-        (xygt) => intersect(edges(xygt[1]), edgesRF(t)).length > 0
-      )
-      transforms(t).filter(nt=> {
-        
-      })
+    let neighs = [...grid.entries()].map(xygt => {
+      return {
+        gt: xygt, 
+        neigh: input.flatMap(t=>transforms(t))
+          .filter(t => intersect(edges(xygt[1]),edges(t)).length === 1)
+      }
+    })
+    
+    
+    // let neighs = input.flatMap(t=>transforms(t)).map(t => {
+    //   return [...grid.values()].filter(
+    //     (gt) => intersect(edges(gt), edges(t)).length > 0
+    //   ).length > 0
+      // transforms(t).filter(nt=> {
+      //   gneighs.some(xygt)
+      // })
 
       
 
@@ -221,7 +231,7 @@ let assemble = (input) => {
       // if (!grid.has(ser(x-1, y))) neigh.filter(nt => fe.deepEqual(left(t),right(nt))).forEach(nt=> {ngrid.set(ser(x-1, y), nt);toRem.add(nt.name)})
       // if (!grid.has(ser(x, y+1))) neigh.filter(nt => fe.deepEqual(top(t),bottom(nt))).forEach(nt=> {ngrid.set(ser(x, y+1), nt);toRem.add(nt.name)})
       // if (!grid.has(ser(x, y-1))) neigh.filter(nt => fe.deepEqual(bottom(t),top(nt))).forEach(nt=> {ngrid.set(ser(x, y-1), nt);toRem.add(nt.name)})
-    })
+    
     return rec(ngrid, input.filter((e) => ![...toRem.values()].some((ae) => fe.deepEqual(ae, e.name))));
   }(grid, tail)
 };
