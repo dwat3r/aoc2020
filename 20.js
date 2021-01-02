@@ -130,7 +130,7 @@ let reverse = (arr) => {
   return ret.reverse();
 };
 
-let edges = (tile) => {
+let edgesRF = (tile) => {
   let es = [
     tile.data[0],
     tile.data.map((tr) => tr[0]),
@@ -140,10 +140,18 @@ let edges = (tile) => {
   return [...es, ...es.map((e) => reverse(e))];
 };
 
+let edges = (tile) => {
+  let es = [
+    tile.data[0],
+    tile.data.map((tr) => tr[0]),
+    tile.data[9],
+    tile.data.map((tr) => tr[9]),
+  ];
+  return es
+};
+
 let intersect = (arr1, arr2) =>
   arr1.filter((e) => arr2.some((ae) => fe.deepEqual(ae, e)));
-  let difference = (arr1, arr2) =>
-  arr1.filter((e) => !arr2.some((ae) => fe.deepEqual(ae, e)));
 
 let run = (input) => {
   let neighs = input.map((t) => ({
@@ -151,7 +159,7 @@ let run = (input) => {
     neighs: input
       .filter(
         (ot) =>
-          !fe.deepEqual(ot, t) && intersect(edges(ot), edges(t)).length > 0
+          !fe.deepEqual(ot, t) && intersect(edgesRF(ot), edgesRF(t)).length > 0
       )
       .map((ot) => ot.name),
   }));
@@ -189,6 +197,7 @@ let transforms = tile => [
 let ser = (x,y) => `${x},${y}`
 let deser = xy => xy.split(",").filter(i=>i).map(i=>parseInt(i))
 
+// todo iterate over input instead of grid, and check if remaining element fits on the already existing arranged puzzle
 let assemble = (input) => {
   let [t, ...tail] = input;
   let grid = new Map();
@@ -198,17 +207,20 @@ let assemble = (input) => {
     if (input.length === 0) return grid;
     let toRem = new Set();
     let ngrid = _.cloneDeep(grid);
-    grid.forEach((t,xy) => {
-      let [x,y] = deser(xy);
-      let neighs = input.filter(
-        (ot) =>
-          !fe.deepEqual(ot, t) && intersect(edges(ot), edges(t)).length > 0
-      ).flatMap(nt=> transforms(nt))
+    input.forEach(t => {
+      let gneighs = [...grid.entries()].filter(
+        (xygt) => intersect(edges(xygt[1]), edgesRF(t)).length > 0
+      )
+      transforms(t).filter(nt=> {
+        
+      })
+
       
-      if (!grid.has(ser(x+1, y))) neighs.filter(nt => fe.deepEqual(right(t),left(nt))).forEach(nt=> {ngrid.set(ser(x+1, y), nt);toRem.add(nt.name)})
-      if (!grid.has(ser(x-1, y))) neighs.filter(nt => fe.deepEqual(left(t),right(nt))).forEach(nt=> {ngrid.set(ser(x-1, y), nt);toRem.add(nt.name)})
-      if (!grid.has(ser(x, y+1))) neighs.filter(nt => fe.deepEqual(top(t),bottom(nt))).forEach(nt=> {ngrid.set(ser(x, y+1), nt);toRem.add(nt.name)})
-      if (!grid.has(ser(x, y-1))) neighs.filter(nt => fe.deepEqual(bottom(t),top(nt))).forEach(nt=> {ngrid.set(ser(x, y-1), nt);toRem.add(nt.name)})
+
+      // if (!grid.has(ser(x+1, y))) neigh.filter(nt => fe.deepEqual(right(t),left(nt))).forEach(nt=> {ngrid.set(ser(x+1, y), nt);toRem.add(nt.name)})
+      // if (!grid.has(ser(x-1, y))) neigh.filter(nt => fe.deepEqual(left(t),right(nt))).forEach(nt=> {ngrid.set(ser(x-1, y), nt);toRem.add(nt.name)})
+      // if (!grid.has(ser(x, y+1))) neigh.filter(nt => fe.deepEqual(top(t),bottom(nt))).forEach(nt=> {ngrid.set(ser(x, y+1), nt);toRem.add(nt.name)})
+      // if (!grid.has(ser(x, y-1))) neigh.filter(nt => fe.deepEqual(bottom(t),top(nt))).forEach(nt=> {ngrid.set(ser(x, y-1), nt);toRem.add(nt.name)})
     })
     return rec(ngrid, input.filter((e) => ![...toRem.values()].some((ae) => fe.deepEqual(ae, e.name))));
   }(grid, tail)
