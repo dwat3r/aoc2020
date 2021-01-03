@@ -175,7 +175,7 @@ let run = (input) => {
     .reduce((a, x) => a * x);
 };
 
-let vb = (v) => util.inspect(v, { depth: null, colors: true, compact: true });
+let vb = (v) => util.inspect(v, { depth: null, colors: true, compact: true, breakLength: 200 });
 //console.log(vb(run(parse(input))));
 
 // part 2
@@ -187,20 +187,20 @@ let bottom = tile => tile.data[9]
 
 let transforms = tile => [
   tile,
-  rot90(tile),
-  rot180(tile),
-  rot270(tile),
-  fliph(tile), 
-  flipv(tile),
-  flipv(rot270(tile)),
-  fliph(rot270(tile))
+  {name: tile.name, data: rot90(tile.data)},
+  {name: tile.name, data: rot180(tile.data)},
+  {name: tile.name, data: rot270(tile.data)},
+  {name: tile.name, data: fliph(tile.data)},
+  {name: tile.name, data: flipv(tile.data)},
+  {name: tile.name, data: flipv(rot270(tile.data))},
+  {name: tile.name, data: fliph(rot270(tile.data))}
 ]
 
-let rot90  = tile =>  ({name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-y][x])) })
-let rot180 = tile =>  ({name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-x][tile.data.length-1-y])) })
-let rot270 = tile =>  ({name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[y][tile.data.length-1-x])) })
-let fliph  = tile =>  ({name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[x][tile.data.length-1-y])) })
-let flipv  = tile =>  ({name: tile.name, data: tile.data.map((tr, x)=> tr.map((_, y)=> tile.data[tile.data.length-1-x][y])) })
+let rot90  = data =>  data.map((tr, x)=> tr.map((_, y)=> data[data.length-1-y][x]))
+let rot180 = data =>  data.map((tr, x)=> tr.map((_, y)=> data[data.length-1-x][data.length-1-y]))
+let rot270 = data =>  data.map((tr, x)=> tr.map((_, y)=> data[y][data.length-1-x]))
+let fliph  = data =>  data.map((tr, x)=> tr.map((_, y)=> data[x][data.length-1-y]))
+let flipv  = data =>  data.map((tr, x)=> tr.map((_, y)=> data[data.length-1-x][y]))
   
 
 let ser = (x,y) => `${x},${y}`
@@ -229,7 +229,7 @@ let assemble = (input) => {
       if (!grid.has(ser(x, y-1))) neigh.filter(nt => fe.deepEqual(bottom(t),top(nt))).forEach(nt=> {ngrid.set(ser(x, y-1), nt);toRem.add(nt.name)})
     });
     return rec(ngrid, input.filter((e) => ![...toRem.values()].some((ae) => fe.deepEqual(ae, e.name))));
-  }(grid, tail)
+  }(grid, tail.filter(tt=> !fe.deepEqual(t.name,tt.name)))
 };
 
 let draw = grid => {
@@ -241,16 +241,53 @@ let draw = grid => {
     let [x1,y1] = deser(x[0]);
     let [x2,y2] = deser(y[0]);
     return (y2 - y1)
-  })
+  }).map(t=> t[1].data.slice(1,t[1].data.length - 1).map(tr=> tr.slice(1,tr.length-1)))
   let wide = Math.sqrt(sorted.length)
-  let long = sorted[0][1].data.length
-  let [start] = deser(sorted[0][0])
-  let ret = sorted.reduce((acc, t, ix)=> {
-    acc[ix%wide]
-  },[])
+  let long = sorted[0].length
+  let ret = function rec(sorted) {
+    let row = sorted.slice(0,wide);
+    let ret = row.reduce((acc,t)=>
+      _.range(0,long).map(y=> 
+          acc[y] = acc[y].concat(t[y])
+      )
+    , Array(long).fill([]));
+    if (sorted.length === wide) return ret;
+    else return [...ret, ...rec(sorted.slice(wide))]
+  }(sorted);
   return ret;
+}
+
+let seaMonster = `                  # 
+#    ##    ##    ###
+ #  #  #  #  #  #   `
+ .split("\n").filter(i=>i).map(r=> r.split(""))
+ .flatMap((l,y)=> l.flatMap((c,x)=> c === "#" ? ({x: x,y : y}) : []))
+
+let findSeaMonsters = pic => {
+  let find = function rec(pic,xoff) {
+    if(pic.length < 3) return 0;
+    if(xoff+20 >= pic[0].length) 
+      return rec(pic.slice(1),0);
+    let rows = pic.slice(0,3);
+    if (seaMonster.every((pos)=> rows[pos.y][pos.x+xoff] === "#")) {
+      return 1 + rec(pic,xoff+20)
+    } else {
+      return 0 + rec(pic, xoff+1)
+    }
+  }
+  let seaMonN = [
+    pic,
+    rot90(pic),
+    rot180(pic),
+    rot270(pic),
+    fliph(pic),
+    flipv(pic),
+    flipv(rot270(pic)),
+    fliph(rot270(pic))
+  ].map(pic=>find(pic,0)).filter(n=>n>0)[0]
+  return pic.flat().filter(c=>c==="#").length - seaMonN * 15
 }
 
 //console.log(vb(run(parse(input))));
 // todo it works for test but not for input
-console.log(vb(draw(assemble(parse(input)))));
+console.log(vb(findSeaMonsters(draw(assemble(parse(test))))));
