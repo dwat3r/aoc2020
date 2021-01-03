@@ -176,7 +176,7 @@ let run = (input) => {
 };
 
 let vb = (v) => util.inspect(v, { depth: null, colors: true, compact: true, breakLength: 200 });
-//console.log(vb(run(parse(input))));
+console.log(vb(run(parse(input))));
 
 // part 2
 
@@ -196,25 +196,21 @@ let transforms = tile => [
   {name: tile.name, data: fliph(rot270(tile.data))}
 ]
 
-let rot90  = data =>  data.map((tr, x)=> tr.map((_, y)=> data[data.length-1-y][x]))
-let rot180 = data =>  data.map((tr, x)=> tr.map((_, y)=> data[data.length-1-x][data.length-1-y]))
-let rot270 = data =>  data.map((tr, x)=> tr.map((_, y)=> data[y][data.length-1-x]))
-let fliph  = data =>  data.map((tr, x)=> tr.map((_, y)=> data[x][data.length-1-y]))
-let flipv  = data =>  data.map((tr, x)=> tr.map((_, y)=> data[data.length-1-x][y]))
+let rot90  = data => data.map((tr, x)=> tr.map((_, y)=> data[data.length-1-y][x]))
+let rot180 = data => data.map((tr, x)=> tr.map((_, y)=> data[data.length-1-x][data.length-1-y]))
+let rot270 = data => data.map((tr, x)=> tr.map((_, y)=> data[y][data.length-1-x]))
+let fliph  = data => data.map((tr, x)=> tr.map((_, y)=> data[x][data.length-1-y]))
+let flipv  = data => data.map((tr, x)=> tr.map((_, y)=> data[data.length-1-x][y]))
   
 
 let ser = (x,y) => `${x},${y}`
 let deser = xy => xy.split(",").filter(i=>i).map(i=>parseInt(i))
 
-// todo iterate over input instead of grid, and check if remaining element fits on the already existing arranged puzzle
-// todo: melysegi bejaras es megnezni hogy melyik configbol elerheto az osszes puzzle elem
-// collect neighbours to sides of grid tiles, and remove tile if it found to be incompatible with the others.
 let assemble = (input) => {
   let [t, ...tail] = input.flatMap(t=>transforms(t));
   let grid = new Map();
   grid.set(ser(0,0), t);
   return function rec(grid, input) {
-    //console.log(vb([grid, input.map(t=>t.name)]))
     if (input.length === 0) return grid;
     let toRem = new Set();
     let ngrid = _.cloneDeep(grid);
@@ -288,6 +284,4 @@ let findSeaMonsters = pic => {
   return pic.flat().filter(c=>c==="#").length - seaMonN * 15
 }
 
-//console.log(vb(run(parse(input))));
-// todo it works for test but not for input
-console.log(vb(findSeaMonsters(draw(assemble(parse(test))))));
+console.log(vb(findSeaMonsters(draw(assemble(parse(input))))));
