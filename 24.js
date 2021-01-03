@@ -107,28 +107,31 @@ let run2 = (input) => {
   m.forEach((n,xy) => {if (n % 2 === 1) tiles.add(xy)});
 
   let end = function rec(tiles, n) {
-    if(n === 2) return tiles;
+    if(n === 100) return tiles;
     let ntiles = _.cloneDeep(tiles);
-    let neighs = new Set();
+    let nss = new Set();
     tiles.forEach((xy) => {
-      let ns = neighs(deser(xy));
-      let blacks = ns.filter(nxy => m.has(ser(nxy))).length
+      let ns = neighs(deser(xy))
+      ns.forEach(n=> nss.add(ser(n)));
+      let blacks = ns.filter(nxy => tiles.has(ser(nxy))).length
       if (blacks === 0 || blacks > 2){
         ntiles.delete(xy)
       }
-      ns.forEach(nxy => {
-        // whites
-        if(!tiles.has(ser(nxy))){
-          let blacks = neighs(nxy).filter(nnxy => tiles.has(ser(nnxy))).length
-          if(blacks === 2) {
-            ntiles.add(ser(nxy));
-          }
-        }
-      })
     })
+    nss.forEach(nxys => {
+      let nxy = deser(nxys)
+      // whites
+      if(!tiles.has(ser(nxy))){
+        let blacks = neighs(nxy).filter(nnxy => tiles.has(ser(nnxy))).length
+        if(blacks === 2) {
+          ntiles.add(ser(nxy));
+        }
+      }
+    })
+    //console.log(n,ntiles.size)
     return rec(ntiles, n+1);
   }(tiles, 0);
-  return end;
+  return end.size;
 };
 
-console.log(vb(run2(parse(test))));
+console.log(vb(run2(parse(input))));
